@@ -7,8 +7,8 @@ First used for the Open Play mode of `~/Code/3dSpaceGameWT/3dSpaceGame` (kept as
 
 ## Quick start
 ```
-ralph init mygame ~/Code/mygame world ui     # makes projects/mygame/project.conf and ~/Code/mygame/ralph/
-# edit ~/Code/mygame/ralph/SPEC.md, CONTRACTS.md, tasks/*.md, and the checks in projects/mygame/project.conf
+ralph init mygame ~/Code/mygame world ui     # makes projects/mygame/project.config.ts and ~/Code/mygame/ralph/
+# edit ~/Code/mygame/ralph/SPEC.md, CONTRACTS.md, tasks/*.md, and the checks in projects/mygame/project.config.ts
 ralph dryrun                                 # whole loop on a toy repo with a fake claude, no tokens used
 ralph docker build rust                      # once: sandbox image (ralph-base, plus ralph-rust)
 ralph docker start mygame                    # run the loop in the sandbox
