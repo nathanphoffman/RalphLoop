@@ -1,6 +1,6 @@
 # ralph-base: the sandbox every loop runs in. Claude Code, git, python, node, and the shell tools the engine uses.
 # Language toolchains go in a layer on top (Dockerfile.rust ...). Build: ralph docker build
-FROM node:22-bookworm
+FROM node:24-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git python3 curl ca-certificates procps jq pkg-config \
