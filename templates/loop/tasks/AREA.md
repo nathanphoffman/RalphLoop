@@ -1,0 +1,6 @@
+# AREA tasks (round 1)
+
+Owns `<paths>`. One item per Claude session, small enough to finish and test in one go.
+
+- [ ] First item ...
+- [ ] Second item ...

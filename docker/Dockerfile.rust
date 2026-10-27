@@ -1,0 +1,9 @@
+# ralph-rust: ralph-base + Rust (and the system libraries macroquad-style crates need).
+FROM ralph-base
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev \
+    && rm -rf /var/lib/apt/lists/*
+USER ralph
+ENV RUSTUP_HOME=/home/ralph/.rustup CARGO_HOME=/home/ralph/.cargo PATH=/home/ralph/.cargo/bin:$PATH
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal -c clippy -c rustfmt
