@@ -1,0 +1,15 @@
+{
+  "name": "ralphloops",
+  "private": true,
+  "type": "module",
+  "description": "Generic engine for autonomous Ralph loops",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "engines": { "node": ">=22.18" },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
