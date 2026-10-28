@@ -16,7 +16,8 @@ const config: ProjectConfig = {
   // The loop was already past its skeleton round (rounds 1 to 18 ran with the original shell scripts).
   skeletonStep: false,
   commitTrailer: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
-  limits: { checkpointEvery: 2 }, // stop after every 2 rounds so the user can playtest
+  // Every 2 rounds the loop waits for up to 90 minutes so the user can playtest (`ralph continue` goes on at once), then carries on.
+  limits: { checkpointEvery: 2, checkpointWaitMinutes: 90 },
 
   // Run 1 reused the three existing worktrees.
   areas: {

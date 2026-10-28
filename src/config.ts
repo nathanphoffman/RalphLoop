@@ -13,6 +13,7 @@ const DEFAULT_LIMITS: Limits = {
   qualityEvery: 3,
   maxRounds: 30,
   checkpointEvery: 0,
+  checkpointWaitMinutes: 0,
   backoffStart: 60,
   backoffMax: 1800,
   maxRateRetries: 100,

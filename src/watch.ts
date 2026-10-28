@@ -32,6 +32,8 @@ export function watchScreen(p: Project, rows: number, columns: number): string {
   ];
   const pauseFile = join(p.stateDir, "PAUSE");
   const nextRound = join(p.stateDir, "next-round");
+  const waiting = readLines(join(p.stateDir, "ralph.log")).at(-1)?.includes("CHECKPOINT: waiting");
+  if (waiting) head.push("AT A CHECKPOINT: test the game; the loop goes on by itself, or run: ralph continue " + p.name);
   if (existsSync(pauseFile)) head.push("PAUSE file present: will stop after this round");
   else if (existsSync(nextRound)) head.push(`next round on restart: ${readFileSync(nextRound, "utf8").trim()}   (stops every ${p.limits.checkpointEvery || "never"} rounds)`);
 
