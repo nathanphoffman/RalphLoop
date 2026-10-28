@@ -4,6 +4,7 @@ import { ownsOf, worktreeOf } from "./areas.ts";
 import { runClaude } from "./claude.ts";
 import { log, recordItem } from "./log.ts";
 import { renderPrompt } from "./prompts.ts";
+import { recordQuality } from "./quality.ts";
 import { commitIfDirty, git, resetClean } from "./shell.ts";
 import { firstOpen, hasOpen, markBlocked, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
@@ -38,6 +39,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     log(p, tag, "quality pass");
     await runClaude(p, dir, renderPrompt(p, "quality", { area, round }), logName, tag);
     commitIfDirty(p, dir, `ralph(${area}): checkpoint after quality pass`);
+    await recordQuality(p, dir, round, area);
     resetClean(dir);
   };
 

@@ -17,6 +17,7 @@ export interface Limits {
   maxItemsPerRound: number; // safety stop for one worker per round
   qualityEvery: number; // finished items between quality passes (0 = never)
   maxRounds: number;
+  checkpointEvery: number; // stop after every N rounds so the user can test (0 = never)
   backoffStart: number; // rate limit backoff, doubles up to backoffMax
   backoffMax: number;
   maxRateRetries: number;

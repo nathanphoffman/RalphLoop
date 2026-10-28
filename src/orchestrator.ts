@@ -1,10 +1,11 @@
-import { existsSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { worktreeOf } from "./areas.ts";
 import { runClaude } from "./claude.ts";
 import { runGate } from "./checks.ts";
 import { ensureState, log } from "./log.ts";
 import { renderPrompt } from "./prompts.ts";
+import { recordQuality } from "./quality.ts";
 import { commitIfDirty, git, gitOk, killChildren } from "./shell.ts";
 import { count, OPEN, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
@@ -99,7 +100,12 @@ export async function runOrchestrator(p: Project): Promise<number> {
     writeFileSync(round0Marker, "");
   }
 
-  for (let round = Number(process.env.RALPH_START_ROUND ?? 1); !existsSync(complete); round++) {
+  // Resume where the last checkpoint stopped (RALPH_START_ROUND overrides).
+  const nextRoundFile = join(p.stateDir, "next-round");
+  const savedRound = existsSync(nextRoundFile) ? Number(readFileSync(nextRoundFile, "utf8").trim()) : 1;
+  const firstRound = Number(process.env.RALPH_START_ROUND ?? savedRound);
+
+  for (let round = firstRound; !existsSync(complete); round++) {
     if (round > p.limits.maxRounds) {
       log(p, TAG, `reached MAX_ROUNDS (${p.limits.maxRounds}), stopping`);
       return 3;
@@ -115,6 +121,7 @@ export async function runOrchestrator(p: Project): Promise<number> {
     prepareIntegration();
     await claude(p.integrationDir, "merge", round);
     let green = await ensureGreen(round, p.integrationDir);
+    if (green) await recordQuality(p, p.integrationDir, round, "merged");
     await claude(p.integrationDir, "plan", round);
     commitIfDirty(p, p.integrationDir, `ralph: round ${round} progress and next tasks`);
 
@@ -142,6 +149,16 @@ export async function runOrchestrator(p: Project): Promise<number> {
         log(p, TAG, "no open tasks and no COMPLETE: planner stalled, stopping");
         return 2;
       }
+    }
+
+    // Checkpoint: stop between rounds (base branch is green, worktrees are synced) so the user can test the game.
+    writeFileSync(nextRoundFile, String(round + 1));
+    const pauseFile = join(p.stateDir, "PAUSE");
+    const isCheckpoint = p.limits.checkpointEvery > 0 && (round - firstRound + 1) % p.limits.checkpointEvery === 0;
+    if (!existsSync(complete) && (existsSync(pauseFile) || isCheckpoint)) {
+      rmSync(pauseFile, { force: true });
+      log(p, TAG, `CHECKPOINT: stopped before round ${round + 1}. Test the game, then run: ralph docker start ${p.name}`);
+      return 0;
     }
   }
   log(p, TAG, "COMPLETE");

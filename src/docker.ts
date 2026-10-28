@@ -17,7 +17,12 @@ export function dockerBuild(rust: boolean): number {
   const dir = join(HOME, "docker");
   const status = docker(["build", "-t", "ralph-base", "--build-arg", `HOST_UID=${process.getuid?.() ?? 1000}`, "--build-arg", `HOST_GID=${process.getgid?.() ?? 1000}`, dir]);
   if (status !== 0 || !rust) return status;
-  return docker(["build", "-t", "ralph-rust", "-f", join(dir, "Dockerfile.rust"), dir]);
+  const rustStatus = docker(["build", "-t", "ralph-rust", "-f", join(dir, "Dockerfile.rust"), dir]);
+  if (rustStatus !== 0) return rustStatus;
+  // Optional: the `codequality` tool, built from its checkout (RALPH_CODEQUALITY_DIR, default ~/Code/CodeQuality).
+  const qualityDir = process.env.RALPH_CODEQUALITY_DIR ?? join(homedir(), "Code/CodeQuality");
+  if (!existsSync(qualityDir)) return 0;
+  return docker(["build", "-t", "ralph-rust-cq", "-f", join(dir, "Dockerfile.codequality"), qualityDir]);
 }
 
 export function dockerStop(p: Project): number {
@@ -34,7 +39,7 @@ function runArgs(p: Project): string[] {
     "--rm", "--name", `ralph-${p.name}`, "--user", `${process.getuid?.()}:${process.getgid?.()}`,
     `--cpus=${p.docker.cpus}`, `--memory=${p.docker.memory}`, "--pids-limit=4096",
     "--cap-drop=ALL", "--security-opt=no-new-privileges",
-    "-e", "HOME=/home/ralph", "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory", "-e", "GIT_CONFIG_VALUE_0=*",
+    "-e", "HOME=/home/ralph", "-e", `RALPH_HOST_HOME=${home}`, "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory", "-e", "GIT_CONFIG_VALUE_0=*",
     ...(p.docker.network ? ["--network", p.docker.network] : []),
     ...mount(p.repo), ...mount(HOME),
     ...mount(join(home, ".claude"), "/home/ralph/.claude"),

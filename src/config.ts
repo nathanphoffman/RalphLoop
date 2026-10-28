@@ -12,6 +12,7 @@ const DEFAULT_LIMITS: Limits = {
   maxItemsPerRound: 24,
   qualityEvery: 3,
   maxRounds: 30,
+  checkpointEvery: 0,
   backoffStart: 60,
   backoffMax: 1800,
   maxRateRetries: 100,

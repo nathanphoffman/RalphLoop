@@ -1,0 +1,13 @@
+# ralph-rust-cq: ralph-rust plus the `codequality` tool. Built with the CodeQuality checkout as the build context:
+#   docker build -t ralph-rust-cq -f docker/Dockerfile.codequality ~/Code/CodeQuality
+FROM ralph-rust
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+COPY . /opt/codequality
+# The Hare and Mojo grammars are vendored (no PyPI release), so install them first; pip then finds them satisfied.
+RUN python3 -m venv /opt/cqvenv \
+ && /opt/cqvenv/bin/pip install --no-cache-dir /opt/codequality/vendor/tree-sitter-hare /opt/codequality/vendor/tree-sitter-mojo \
+ && /opt/cqvenv/bin/pip install --no-cache-dir /opt/codequality \
+ && ln -s /opt/cqvenv/bin/codequality /usr/local/bin/codequality
+USER ralph

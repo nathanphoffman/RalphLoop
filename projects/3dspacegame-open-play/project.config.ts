@@ -5,13 +5,18 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ProjectConfig } from "../../src/types.ts";
 
-const wt = join(homedir(), "Code/3dSpaceGameWT");
+// In the Docker sandbox HOME is /home/ralph, but the folders are mounted at the host paths (RALPH_HOST_HOME).
+const wt = join(process.env.RALPH_HOST_HOME ?? homedir(), "Code/3dSpaceGameWT");
 
 const config: ProjectConfig = {
   repo: join(wt, "3dSpaceGame"),
   baseBranch: "main",
   loopDir: "ralph",
   rulesFile: "CLAUDE.md",
+  // The loop was already past its skeleton round (rounds 1 to 18 ran with the original shell scripts).
+  skeletonStep: false,
+  commitTrailer: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
+  limits: { checkpointEvery: 2 }, // stop after every 2 rounds so the user can playtest
 
   // Run 1 reused the three existing worktrees.
   areas: {
@@ -20,11 +25,21 @@ const config: ProjectConfig = {
       worktree: join(wt, "worktree-1"),
       branch: "work-1",
     },
-    flight: { owns: /^src\/open_play\/flight\//, worktree: join(wt, "worktree-2"), branch: "work-2" },
-    interface: { owns: /^src\/open_play\/interface\//, worktree: join(wt, "worktree-3"), branch: "work-3" },
+    // Flight and interface may also extract plain-data functions in these shared folders so Open Play can reuse the
+    // wave defense / Mine Liberation code (see the "Shared code reuse" section of ralph/CONTRACTS.md).
+    flight: {
+      owns: /^(src\/open_play\/flight\/|src\/shared\/(render|asteroids|weapons|audio|entities|game|scene|spheres|lighting|planet))/,
+      worktree: join(wt, "worktree-2"),
+      branch: "work-2",
+    },
+    interface: {
+      owns: /^(src\/open_play\/interface\/|src\/shared\/(hud|app|menu|settings|key_bindings|ui))/,
+      worktree: join(wt, "worktree-3"),
+      branch: "work-3",
+    },
   },
   integrationFiles:
-    /^(src\/open_play\/mod\.rs|src\/open_play\/contracts\/|src\/lib\.rs|src\/main\.rs|src\/shared\/game\/mod\.rs|src\/shared\/menu\/modes\.rs|src\/shared\/net\/messages\/|CLAUDE\.md|README\.md|Cargo\.(toml|lock))/,
+    /^(src\/open_play\/mod\.rs|src\/open_play\/contracts\/|src\/lib\.rs|src\/main\.rs|src\/shared\/game\/mod\.rs|src\/shared\/menu\/modes\.rs|src\/shared\/net\/messages\/|CLAUDE\.md|README\.md|Cargo\.(toml|lock)|ralph\/(DECISIONS|CONTRACTS|PARITY)\.md)/,
 
   // Lesson from run 1: the full gate after every item (3 workers at once) pushed load to ~33 on a 12 GB box.
   itemCheck: "cargo fmt && cargo check && cargo test open_play::{{AREA}}",
@@ -38,7 +53,8 @@ const config: ProjectConfig = {
   qualityCmd: "codequality --full",
   env: { CARGO_BUILD_JOBS: "3" },
 
-  docker: { image: "ralph-rust", cpus: 6, memory: "9g", mounts: [wt] },
+  // ralph-rust-cq = ralph-rust plus the `codequality` tool (built by `ralph docker build rust`).
+  docker: { image: "ralph-rust-cq", cpus: 6, memory: "9g", mounts: [wt] },
 };
 
 export default config;

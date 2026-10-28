@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { worktreeOf } from "./areas.ts";
 import { ensureState } from "./log.ts";
+import { readQuality } from "./quality.ts";
 import { readItems, readLines, status } from "./status.ts";
 import { BLOCKED, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
@@ -41,6 +42,11 @@ export function report(p: Project): string {
     "| round | area | done | failed | blocked | minutes |",
     "|---|---|---|---|---|---|",
     ...sorted.map((r) => `| ${r.round} | ${r.area} | ${r.done} | ${r.fail} | ${r.blocked} | ${Math.round(r.seconds / 60)} |`),
+    "",
+    "## Code quality score (codequality --full, newest last)",
+    ...(readQuality(p).length
+      ? readQuality(p).slice(-12).map((q) => `- round ${q.round} ${q.area}: ${q.score} ${q.grade}`)
+      : ["no scores recorded yet"]),
     "",
     "## Blocked items",
     ...(blocked.length ? blocked : ["none"]),
