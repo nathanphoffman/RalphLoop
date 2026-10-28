@@ -18,7 +18,7 @@ const config: ProjectConfig = {
   commitTrailer: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
   // Every 2 rounds the loop pauses so the user can playtest. It goes on when `ralph continue` is run, or when
   // CONTINUE_TO_NEXT_ROUND=true is set in runs/<name>/control.env (for when the user is away). No time limit.
-  limits: { checkpointEvery: 2, checkpointWaitMinutes: 0 },
+  limits: { maxRounds: 100, checkpointEvery: 2, checkpointWaitMinutes: 0 },
 
   // Run 1 reused the three existing worktrees.
   areas: {
