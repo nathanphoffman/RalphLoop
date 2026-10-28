@@ -54,7 +54,7 @@ const config: ProjectConfig = {
   env: { CARGO_BUILD_JOBS: "3" },
 
   // ralph-rust-cq = ralph-rust plus the `codequality` tool (built by `ralph docker build rust`).
-  docker: { image: "ralph-rust-cq", cpus: 6, memory: "9g", mounts: [wt] },
+  docker: { image: "ralph-rust-cq", cpus: 6, memory: "8g", mounts: [wt] },
 };
 
 export default config;
