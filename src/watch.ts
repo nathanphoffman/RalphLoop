@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readQuality } from "./quality.ts";
@@ -8,10 +9,25 @@ const REFRESH_MILLISECONDS = 3000;
 const CLEAR_SCREEN = "\x1b[2J\x1b[H";
 const MIN_LOG_LINES = 8;
 
+const BYTES_PER_GB = 1024 ** 3;
+
+/** The container's memory now and its highest so far, from the cgroup files (Linux, Docker with cgroup v2). */
+function containerMemory(p: Project): string {
+  const id = spawnSync("docker", ["inspect", "-f", "{{.Id}}", `ralph-${p.name}`], { encoding: "utf8" }).stdout.trim();
+  if (!id) return "";
+  const read = (name: string): number | undefined => {
+    const file = `/sys/fs/cgroup/system.slice/docker-${id}.scope/${name}`;
+    return existsSync(file) ? Number(readFileSync(file, "utf8")) / BYTES_PER_GB : undefined;
+  };
+  const now = read("memory.current");
+  const peak = read("memory.peak");
+  return now === undefined || peak === undefined ? "" : `   memory: ${now.toFixed(1)} GB now, ${peak.toFixed(1)} GB peak (limit ${p.docker.memory})`;
+}
+
 /** One screen: where the loop is, the latest scores, and as many recent log lines as fit. */
 export function watchScreen(p: Project, rows: number, columns: number): string {
   const head = [
-    `ralph watch ${p.name}   ${new Date().toLocaleString("sv")} (local)   container: ${isInDocker(p) ? "UP" : "not running"}`,
+    `ralph watch ${p.name}   ${new Date().toLocaleString("sv")} (local)   container: ${isInDocker(p) ? "UP" : "not running"}${containerMemory(p)}`,
     status(p, 0).replace("\n--- last log lines", ""),
   ];
   const pauseFile = join(p.stateDir, "PAUSE");

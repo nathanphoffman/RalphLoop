@@ -51,7 +51,7 @@ const config: ProjectConfig = {
     "cargo clippy --all-targets -- -D warnings 2>&1",
   ].join("\n"),
   qualityCmd: "codequality --full",
-  env: { CARGO_BUILD_JOBS: "3" },
+  env: { CARGO_BUILD_JOBS: "2" },
 
   // ralph-rust-cq = ralph-rust plus the `codequality` tool (built by `ralph docker build rust`).
   docker: { image: "ralph-rust-cq", cpus: 6, memory: "8g", mounts: [wt] },
