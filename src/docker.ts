@@ -39,7 +39,7 @@ function runArgs(p: Project): string[] {
     "--rm", "--name", `ralph-${p.name}`, "--user", `${process.getuid?.()}:${process.getgid?.()}`,
     `--cpus=${p.docker.cpus}`, `--memory=${p.docker.memory}`, "--pids-limit=4096",
     "--cap-drop=ALL", "--security-opt=no-new-privileges",
-    "-e", "HOME=/home/ralph", "-e", `RALPH_HOST_HOME=${home}`, "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory", "-e", "GIT_CONFIG_VALUE_0=*",
+    "-e", "HOME=/home/ralph", "-e", `RALPH_HOST_HOME=${home}`, "-e", `TZ=${Intl.DateTimeFormat().resolvedOptions().timeZone}`, "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory", "-e", "GIT_CONFIG_VALUE_0=*",
     ...(p.docker.network ? ["--network", p.docker.network] : []),
     ...mount(p.repo), ...mount(HOME),
     ...mount(join(home, ".claude"), "/home/ralph/.claude"),

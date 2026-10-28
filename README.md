@@ -12,6 +12,7 @@ ralph init mygame ~/Code/mygame world ui     # makes projects/mygame/project.con
 ralph dryrun                                 # whole loop on a toy repo with a fake claude, no tokens used
 ralph docker build rust                      # once: sandbox image (ralph-base, plus ralph-rust)
 ralph docker start mygame                    # run the loop in the sandbox
+ralph watch mygame                           # live screen: status, scores, newest log lines (Ctrl-C closes it)
 ralph status mygame | ralph log mygame -f | ralph report mygame | ralph docker stop mygame
 ```
 Needs Node 22.18+ (it runs the `.ts` files directly, no build step; `npm install` is only for type checking). Put `ralph` on your PATH (e.g. `ln -s ~/Code/RalphLoops/ralph ~/.local/bin/ralph`). `ralph start <name> --host` runs without

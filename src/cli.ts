@@ -8,6 +8,7 @@ import { init } from "./init.ts";
 import { runOrchestrator } from "./orchestrator.ts";
 import { report } from "./report.ts";
 import { setup } from "./setup.ts";
+import { watch } from "./watch.ts";
 import { isRunning, status } from "./status.ts";
 
 const USAGE = `ralph init <name> <repo> [area...]   create projects/<name>/ and <repo>/ralph/ from the templates
@@ -17,6 +18,7 @@ ralph run <name>                     setup + run in the foreground (what the con
 ralph stop <name>                    stop the loop and any Claude sessions it started
 ralph status [name]                  items per area, round, ETA, last log lines
 ralph log <name> [-f]                show (or follow) the loop log
+ralph watch <name>                   live screen: status, scores and the newest log lines (Ctrl-C to close)
 ralph report <name>                  write and print a markdown report
 ralph dryrun [dir]                   run the whole loop on a toy repo with a fake claude
 ralph list                           projects
@@ -98,6 +100,8 @@ async function main(): Promise<number> {
       console.log(readFileSync(file, "utf8").split("\n").slice(-61).join("\n"));
       return 0;
     }
+    case "watch":
+      return watch(await project());
     case "report":
       console.log(report(await project()));
       return 0;

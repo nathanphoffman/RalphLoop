@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { worktreeOf } from "./areas.ts";
@@ -28,6 +29,12 @@ export function readLines(file: string): string[] {
   return existsSync(file) ? readFileSync(file, "utf8").split("\n").filter(Boolean) : [];
 }
 
+/** True when this project's loop is running in its Docker sandbox (the pid file inside the container is not visible here). */
+export function isInDocker(p: Project): boolean {
+  const result = spawnSync("docker", ["ps", "-q", "-f", `name=^ralph-${p.name}$`], { encoding: "utf8" });
+  return result.status === 0 && result.stdout.trim() !== "";
+}
+
 export function isRunning(p: Project): number | undefined {
   const file = join(p.stateDir, "orchestrator.pid");
   if (!existsSync(file)) return undefined;
@@ -43,7 +50,7 @@ export function isRunning(p: Project): number | undefined {
 /** Where the loop is: items per area, round, running or not, rough ETA, last log lines. */
 export function status(p: Project, logLines = 8): string {
   const pid = isRunning(p);
-  const state = existsSync(join(p.stateDir, "COMPLETE")) ? "COMPLETE" : pid ? `running (pid ${pid})` : "stopped";
+  const state = existsSync(join(p.stateDir, "COMPLETE")) ? "COMPLETE" : pid ? `running (pid ${pid})` : isInDocker(p) ? "running (in Docker)" : "stopped";
   const round = existsSync(join(p.stateDir, "round")) ? readFileSync(join(p.stateDir, "round"), "utf8").trim() : "0";
   const items = readItems(p);
   const out = [`project: ${p.name}   state: ${state}   round: ${round}`];
