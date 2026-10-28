@@ -4,7 +4,7 @@ import { worktreeOf } from "./areas.ts";
 import { runClaude } from "./claude.ts";
 import { runGate } from "./checks.ts";
 import { ensureState, log } from "./log.ts";
-import { waitAtCheckpoint } from "./checkpoint.ts";
+import { ensureControlFile, waitAtCheckpoint } from "./checkpoint.ts";
 import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
 import { commitIfDirty, git, gitOk, killChildren } from "./shell.ts";
@@ -19,6 +19,7 @@ const TAG = "orchestrator";
  *  Returns the exit code: 0 complete, 1 setup problem, 2 planner stalled, 3 max rounds, 4 red round, 5 cannot advance base. */
 export async function runOrchestrator(p: Project): Promise<number> {
   ensureState(p);
+  ensureControlFile(p);
   const complete = join(p.stateDir, "COMPLETE");
   const claude = (dir: string, prompt: string, round: number, gateOutput = "") =>
     runClaude(p, dir, renderPrompt(p, prompt, { round, gateOutput }), `round-${round}-${prompt}.log`, TAG);
@@ -158,10 +159,6 @@ export async function runOrchestrator(p: Project): Promise<number> {
     const isCheckpoint = p.limits.checkpointEvery > 0 && (round - firstRound + 1) % p.limits.checkpointEvery === 0;
     if (!existsSync(complete) && (existsSync(pauseFile) || isCheckpoint)) {
       rmSync(pauseFile, { force: true });
-      if (p.limits.checkpointWaitMinutes <= 0) {
-        log(p, TAG, `CHECKPOINT: stopped before round ${round + 1}. Test the game, then run: ralph docker start ${p.name}`);
-        return 0;
-      }
       await waitAtCheckpoint(p, p.limits.checkpointWaitMinutes);
     }
   }

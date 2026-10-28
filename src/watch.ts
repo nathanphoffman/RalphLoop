@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { controlFile, shouldContinueToNextRound } from "./checkpoint.ts";
 import { readQuality } from "./quality.ts";
 import { isInDocker, readLines, status } from "./status.ts";
 import type { Project } from "./types.ts";
@@ -33,7 +34,8 @@ export function watchScreen(p: Project, rows: number, columns: number): string {
   const pauseFile = join(p.stateDir, "PAUSE");
   const nextRound = join(p.stateDir, "next-round");
   const waiting = readLines(join(p.stateDir, "ralph.log")).at(-1)?.includes("CHECKPOINT: waiting");
-  if (waiting) head.push("AT A CHECKPOINT: test the game; the loop goes on by itself, or run: ralph continue " + p.name);
+  if (waiting) head.push("AT A CHECKPOINT: test the game, then run: ralph continue " + p.name + "   (or set CONTINUE_TO_NEXT_ROUND=true in " + controlFile(p) + ")");
+  head.push(`CONTINUE_TO_NEXT_ROUND=${shouldContinueToNextRound(p)}   (file: ${controlFile(p)})`);
   if (existsSync(pauseFile)) head.push("PAUSE file present: will stop after this round");
   else if (existsSync(nextRound)) head.push(`next round on restart: ${readFileSync(nextRound, "utf8").trim()}   (stops every ${p.limits.checkpointEvery || "never"} rounds)`);
 

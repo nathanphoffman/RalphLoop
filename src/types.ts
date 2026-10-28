@@ -18,7 +18,7 @@ export interface Limits {
   qualityEvery: number; // finished items between quality passes (0 = never)
   maxRounds: number;
   checkpointEvery: number; // pause after every N rounds so the user can test (0 = never)
-  checkpointWaitMinutes: number; // at a checkpoint: 0 = stop the loop; N = wait up to N minutes (or `ralph continue`), then go on
+  checkpointWaitMinutes: number; // at a checkpoint: wait for the user at most N minutes, then go on (0 = no limit)
   backoffStart: number; // rate limit backoff, doubles up to backoffMax
   backoffMax: number;
   maxRateRetries: number;
