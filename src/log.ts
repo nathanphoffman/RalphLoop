@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { reportLogLine } from "./notify.ts";
 import type { Project } from "./types.ts";
 
 const stamp = () => new Date().toLocaleString("sv"); // 2026-10-27 18:56:57
@@ -13,6 +14,7 @@ export function log(p: Project, tag: string, message: string): void {
   ensureState(p);
   appendFileSync(join(p.stateDir, "ralph.log"), line);
   process.stderr.write(line);
+  reportLogLine(p, tag, message);
 }
 
 export type ItemStatus = "done" | "fail" | "blocked";

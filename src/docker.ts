@@ -42,6 +42,8 @@ function runArgs(p: Project): string[] {
     "-e", "HOME=/home/ralph", "-e", `RALPH_HOST_HOME=${home}`, "-e", `TZ=${Intl.DateTimeFormat().resolvedOptions().timeZone}`, "-e", "GIT_CONFIG_COUNT=1", "-e", "GIT_CONFIG_KEY_0=safe.directory", "-e", "GIT_CONFIG_VALUE_0=*",
     ...(p.docker.network ? ["--network", p.docker.network] : []),
     ...mount(p.repo), ...mount(HOME),
+    // Read-only, so the loop can run GraphData's ralph-report.mjs (see notify.ts).
+    ...mount(join(home, "Code/GraphData"), undefined, true),
     ...mount(join(home, ".claude"), "/home/ralph/.claude"),
     ...mount(join(home, ".claude.json"), "/home/ralph/.claude.json"),
     ...(existsSync(join(home, ".gitconfig")) ? mount(join(home, ".gitconfig"), "/home/ralph/.gitconfig", true) : []),
