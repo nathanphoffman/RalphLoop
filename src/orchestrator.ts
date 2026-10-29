@@ -13,6 +13,8 @@ import type { Project } from "./types.ts";
 import { runWorker } from "./worker.ts";
 
 const TAG = "orchestrator";
+// Who a Claude session counts as in the live site's log: the planner, the merger (merges the workers' branches) or the fixer (repairs red checks).
+const SESSION_TAGS: Record<string, string> = { plan: "planner", merge: "merger", fixbuild: "fixer" };
 
 /** The single loop. Round 0 builds the skeleton, then each round:
  *  workers in parallel -> merge on the integration branch -> checks -> progress + next tasks -> fast-forward base -> sync worktrees.
@@ -21,15 +23,18 @@ export async function runOrchestrator(p: Project): Promise<number> {
   ensureState(p);
   ensureControlFile(p);
   const complete = join(p.stateDir, "COMPLETE");
-  const claude = (dir: string, prompt: string, round: number, gateOutput = "") =>
-    runClaude(p, dir, renderPrompt(p, prompt, { round, gateOutput }), `round-${round}-${prompt}.log`, TAG);
+  const claude = (dir: string, prompt: string, round: number, gateOutput = "") => {
+    const tag = SESSION_TAGS[prompt] ?? TAG;
+    log(p, tag, `${prompt} session started (round ${round})`);
+    return runClaude(p, dir, renderPrompt(p, prompt, { round, gateOutput }), `round-${round}-${prompt}.log`, tag);
+  };
 
   // Run the full checks in <dir>; on failure ask Claude to fix, up to 3 times.
   const ensureGreen = async (round: number, dir: string): Promise<boolean> => {
     for (let attempt = 1; attempt <= 3; attempt++) {
       const gate = await runGate(p, dir);
       if (gate.ok) {
-        commitIfDirty(p, dir, `ralph: formatting after round ${round}`);
+        commitIfDirty(p, dir, `ralph: formatting after round ${round}`, "fixer");
         return true;
       }
       log(p, TAG, `checks failed in ${dir.split("/").pop()} (attempt ${attempt})`);
@@ -125,7 +130,7 @@ export async function runOrchestrator(p: Project): Promise<number> {
     let green = await ensureGreen(round, p.integrationDir);
     if (green) await recordQuality(p, p.integrationDir, round, "merged");
     await claude(p.integrationDir, "plan", round);
-    commitIfDirty(p, p.integrationDir, `ralph: round ${round} progress and next tasks`);
+    commitIfDirty(p, p.integrationDir, `ralph: round ${round} progress and next tasks`, "planner");
 
     // COMPLETE only counts if the result passes the checks.
     if (existsSync(complete) && !(await runGate(p, p.integrationDir)).ok) {

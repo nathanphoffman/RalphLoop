@@ -38,7 +38,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     if (qualityEvery <= 0) return;
     log(p, tag, "quality pass");
     await runClaude(p, dir, renderPrompt(p, "quality", { area, round }), logName, tag);
-    commitIfDirty(p, dir, `ralph(${area}): checkpoint after quality pass`);
+    commitIfDirty(p, dir, `ralph(${area}): checkpoint after quality pass`, tag);
     await recordQuality(p, dir, round, area);
     resetClean(dir);
   };
@@ -51,7 +51,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     log(p, tag, `item ${items}: ${item.slice(0, 90)}`);
 
     await runClaude(p, dir, renderPrompt(p, "worker", { area, round }), logName, tag);
-    commitIfDirty(p, dir, `ralph(${area}): checkpoint after item`);
+    commitIfDirty(p, dir, `ralph(${area}): checkpoint after item`, tag);
     const seconds = Math.round((Date.now() - started) / 1000);
 
     if (firstOpen(tasks) !== item) {
@@ -73,7 +73,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     log(p, tag, `no progress on item (fail ${fails} of ${maxItemFails})`);
     if (fails >= maxItemFails) {
       markBlocked(tasks, item, maxItemFails);
-      commitIfDirty(p, dir, `ralph(${area}): mark item blocked`);
+      commitIfDirty(p, dir, `ralph(${area}): mark item blocked`, tag);
       recordItem(p, round, area, "blocked", 0);
       fails = 0;
     }

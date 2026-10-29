@@ -1,4 +1,5 @@
 import { type ChildProcess, execFileSync, spawn, spawnSync } from "node:child_process";
+import { reportCommit } from "./notify.ts";
 import type { Project } from "./types.ts";
 
 export interface RunResult {
@@ -51,9 +52,13 @@ export function gitOk(dir: string, ...args: string[]): boolean {
   return spawnSync("git", ["-C", dir, ...args], { stdio: "ignore" }).status === 0;
 }
 
-export function commitIfDirty(p: Project, dir: string, message: string): void {
+/** Commit everything in <dir> if anything changed, and tell the live site. <source> is who made it, like "worker:world" or "planner". */
+export function commitIfDirty(p: Project, dir: string, message: string, source = "orchestrator"): void {
   git(dir, "add", "-A");
-  if (!gitOk(dir, "diff", "--cached", "--quiet")) git(dir, "commit", "-q", "-m", `${message}\n\n${p.commitTrailer}`);
+  if (gitOk(dir, "diff", "--cached", "--quiet")) return;
+
+  git(dir, "commit", "-q", "-m", `${message}\n\n${p.commitTrailer}`);
+  reportCommit(p, dir, source);
 }
 
 export function resetClean(dir: string): void {
