@@ -18,19 +18,19 @@ const config: ProjectConfig = {
   commitTrailer: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
   // Every 2 rounds the loop pauses so the user can playtest. It goes on when `ralph continue` is run, or when
   // CONTINUE_TO_NEXT_ROUND=true is set in runs/<name>/control.env (for when the user is away). No time limit.
-  limits: { maxRounds: 100, checkpointEvery: 1, checkpointWaitMinutes: 0 },
+  limits: { maxRounds: 100, checkpointEvery: 0, checkpointWaitMinutes: 0 },
 
   // Run 1 reused the three existing worktrees.
   areas: {
     world: {
-      owns: /^(src\/open_play\/(world|host|save)\/|src\/server\/|src\/bin\/|src\/shared\/net\/open_play\/)/,
+      owns: /^(src\/open_play\/(world|host|save)\/|src\/server\/|src\/bin\/|src\/shared\/net\/)/,
       worktree: join(wt, "worktree-1"),
       branch: "work-1",
     },
     // Flight and interface may also extract plain-data functions in these shared folders so Open Play can reuse the
     // wave defense / Mine Liberation code (see the "Shared code reuse" section of ralph/CONTRACTS.md).
     flight: {
-      owns: /^(src\/open_play\/flight\/|src\/shared\/(render|asteroids|weapons|audio|entities|game|scene|spheres|lighting|planet))/,
+      owns: /^(src\/open_play\/flight\/|src\/(flagship|defense|mine|dogfight|capture)\/|src\/shared\/(render|asteroids|weapons|audio|entities|game|scene|spheres|lighting|planet|player|battery|enemy))/,
       worktree: join(wt, "worktree-2"),
       branch: "work-2",
     },
