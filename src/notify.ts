@@ -52,11 +52,11 @@ export function reportLogLine(p: Project, tag: string, message: string): void {
   }
 }
 
-/** Lines in all text files of the commit just made in <dir> (blank lines and lockfiles included); 0 when it cannot be counted. */
-function projectLines(dir: string): number {
+/** Lines in all text files of commit <rev> in <dir> (blank lines and lockfiles included); 0 when it cannot be counted. */
+function projectLines(dir: string, rev: string): number {
   try {
-    // One "HEAD:path:count" line per file; binary files are skipped.
-    return git(dir, "grep", "-I", "-c", "", "HEAD")
+    // One "<rev>:path:count" line per file; binary files are skipped.
+    return git(dir, "grep", "-I", "-c", "", rev)
       .split("\n")
       .reduce((sum, line) => sum + (Number(line.slice(line.lastIndexOf(":") + 1)) || 0), 0);
   } catch {
@@ -64,16 +64,27 @@ function projectLines(dir: string): number {
   }
 }
 
-/** Tells the live site about the commit just made in <dir>: subject, lines added and removed, files changed. */
-export function reportCommit(p: Project, dir: string, source: string): void {
+/** Tells the live site about commit <rev> (the newest by default) in <dir>: subject, lines added and removed, files changed. */
+export function reportCommit(p: Project, dir: string, source: string, rev = "HEAD"): void {
   if (!reporting()) return;
 
   try {
-    const [sha = "", subject = "", ...stats] = git(dir, "show", "--numstat", "--format=%H%n%s", "HEAD").split("\n").filter(Boolean);
+    const [sha = "", subject = "", ...stats] = git(dir, "show", "--numstat", "--format=%H%n%s", rev).split("\n").filter(Boolean);
     // Each stat line is "added<TAB>removed<TAB>file"; binary files show "-" and count as no lines.
     const rows = stats.map((line) => line.split("\t"));
     const total = (column: number) => rows.reduce((sum, row) => sum + (Number(row[column]) || 0), 0);
-    send([p.name, "commit", subject, "--source", source, "--sha", sha, "--added", String(total(0)), "--removed", String(total(1)), "--files", String(rows.length), "--total", String(projectLines(dir))]);
+    send([p.name, "commit", subject, "--source", source, "--sha", sha, "--added", String(total(0)), "--removed", String(total(1)), "--files", String(rows.length), "--total", String(projectLines(dir, sha))]);
+  } catch {
+    // Reporting must never break the loop.
+  }
+}
+
+/** Tells the live site about every commit made in <dir> after <fromSha>, oldest first. Claude sessions commit their own work, so this catches those too (the site ignores a commit it already has). */
+export function reportCommitsSince(p: Project, dir: string, source: string, fromSha: string): void {
+  if (!reporting()) return;
+
+  try {
+    for (const sha of git(dir, "rev-list", "--reverse", `${fromSha}..HEAD`).split("\n").filter(Boolean)) reportCommit(p, dir, source, sha);
   } catch {
     // Reporting must never break the loop.
   }

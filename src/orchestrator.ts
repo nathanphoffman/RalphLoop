@@ -7,6 +7,7 @@ import { ensureState, log } from "./log.ts";
 import { ensureControlFile, waitAtCheckpoint } from "./checkpoint.ts";
 import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
+import { reportCommitsSince } from "./notify.ts";
 import { commitIfDirty, git, gitOk, killChildren } from "./shell.ts";
 import { count, OPEN, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
@@ -23,10 +24,14 @@ export async function runOrchestrator(p: Project): Promise<number> {
   ensureState(p);
   ensureControlFile(p);
   const complete = join(p.stateDir, "COMPLETE");
-  const claude = (dir: string, prompt: string, round: number, gateOutput = "") => {
+  const claude = async (dir: string, prompt: string, round: number, gateOutput = "") => {
     const tag = SESSION_TAGS[prompt] ?? TAG;
     log(p, tag, `${prompt} session started (round ${round})`);
-    return runClaude(p, dir, renderPrompt(p, prompt, { round, gateOutput }), `round-${round}-${prompt}.log`, tag);
+    const before = git(dir, "rev-parse", "HEAD");
+    const status = await runClaude(p, dir, renderPrompt(p, prompt, { round, gateOutput }), `round-${round}-${prompt}.log`, tag);
+    // Claude commits its own work (the merge, the fixes), so tell the site about those commits too.
+    reportCommitsSince(p, dir, tag, before);
+    return status;
   };
 
   // Run the full checks in <dir>; on failure ask Claude to fix, up to 3 times.

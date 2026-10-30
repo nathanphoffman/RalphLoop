@@ -5,6 +5,7 @@ import { runClaude } from "./claude.ts";
 import { log, recordItem } from "./log.ts";
 import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
+import { reportCommitsSince } from "./notify.ts";
 import { commitIfDirty, git, resetClean } from "./shell.ts";
 import { firstOpen, hasOpen, markBlocked, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
@@ -37,8 +38,10 @@ export async function runWorker(p: Project, area: string, round: number): Promis
   const qualityPass = async (): Promise<void> => {
     if (qualityEvery <= 0) return;
     log(p, tag, "quality pass");
+    const before = git(dir, "rev-parse", "HEAD");
     await runClaude(p, dir, renderPrompt(p, "quality", { area, round }), logName, tag);
     commitIfDirty(p, dir, `ralph(${area}): checkpoint after quality pass`, tag);
+    reportCommitsSince(p, dir, tag, before);
     await recordQuality(p, dir, round, area);
     resetClean(dir);
   };
@@ -52,6 +55,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
 
     await runClaude(p, dir, renderPrompt(p, "worker", { area, round }), logName, tag);
     commitIfDirty(p, dir, `ralph(${area}): checkpoint after item`, tag);
+    reportCommitsSince(p, dir, tag, startHead);
     const seconds = Math.round((Date.now() - started) / 1000);
 
     if (firstOpen(tasks) !== item) {
