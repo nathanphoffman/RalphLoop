@@ -29,6 +29,8 @@ export interface ProjectConfig {
   /** The git repo the loop builds in (must be on baseBranch and clean). */
   repo: string;
   baseBranch?: string; // default main
+  /** Branch the round merges on (default ralph/integration). Give each project in one repo its own. */
+  integrationBranch?: string;
   loopDir?: string; // folder in the repo with SPEC.md, CONTRACTS.md, tasks/ (default ralph)
   rulesFile?: string; // the repo's own coding rules, read by workers if present (default CLAUDE.md)
   /** Areas run in parallel in their own worktrees. Object order is the merge order. */

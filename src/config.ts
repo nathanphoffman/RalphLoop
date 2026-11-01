@@ -60,7 +60,7 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
     stateDir: join(runsDir, "state"),
     worktreesDir: join(runsDir, "worktrees"),
     integrationDir: join(runsDir, "integration"),
-    integrationBranch: "ralph/integration",
+    integrationBranch: config.integrationBranch ?? "ralph/integration",
     docker: {
       image: config.docker?.image ?? "ralph-base",
       cpus: config.docker?.cpus ?? 6,
