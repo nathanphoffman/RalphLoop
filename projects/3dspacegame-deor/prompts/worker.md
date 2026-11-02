@@ -61,6 +61,9 @@ Do exactly ONE item: the first line in {{LOOP_DIR}}/tasks/{{AREA}}.md that start
    `with (...)`), and `x = y with (f)` (write `Type x2 = y with (f)`). Still a rule: never store a `GameHandle` in a struct,
    pass it as its own parameter. Do not log these as bugs.
    Deor has a while loop: write `for if condition` (see deor_specification/docs/loops.md). There is no `while` keyword.
+   BUG items ({{LOOP_DIR}}/BUGS.md): measure first. If the numbers rule the code out and the rest needs a real window (GL
+   upload, shaders, screen switches), do not keep re-measuring: write the numbers and what you ruled out under the bug, set
+   its Status to `Needs human check`, tick the item and stop.
 6b. A Deor helper that builds a struct which is later drawn (text with a size, a box, a colour) gets a Rust test of what it
    builds (size above zero, the colour you expect). Drawing cannot be tested, but the numbers fed to it can.
 6. Write legible Deor: short functions, descriptive names (3+ characters), a named variable for each intermediate result,

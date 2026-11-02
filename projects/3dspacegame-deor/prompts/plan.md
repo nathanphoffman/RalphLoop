@@ -74,4 +74,15 @@ Do not chase the number with artificial changes.
    at the top of its area's list (keep it above all conversion items, never parked, never blocked, and never tagged
    `(continues previous)`). When BUGS.md says Fixed, drop the item and carry on with conversion work. If a Fixed bug
    has no measured numbers in BUGS.md, treat it as still open.
+   Bugs that need a human check: if a bug's Status in BUGS.md is `Needs human check` (or its note says it was "left Open for
+   a human check", or the numbers rule out the code and only a real window could show more), do two things this round.
+   (1) Drop its `BUG FIRST` item so it stops holding the top of the list, and set its Status to `Needs human check` yourself.
+   (2) Add ONE item `TIMING LOGS (bug N)` near the top of the area that owns the code (cross-area edits are allowed for it):
+   add small, cheap timing log lines to the real game with `std::time::Instant`, printed to stderr only when a step goes
+   over its limit, and switched off by the environment variable `NO_TIMING_LOGS`. Cover the places a test cannot time:
+   for the undock freeze, the click on Undock, the end of the scene build, and the first drawn flight frame; for the Esc lag,
+   the time from the Esc press to the first drawn pause-page frame and the first drawn frame after resume; and for any bug, any
+   frame over 50 ms with the name of the screen it was on. Use the existing profiler module if it fits. One shared helper,
+   no copies. Keep the lines out of tests. Then write in BUGS.md how to read them. When the user reports numbers or the bug
+   again, a human sets the Status back to Open or Reopened; until then do not spend sessions on that bug.
 4. Commit everything under {{LOOP_DIR}}/ ("ralph: round {{ROUND}} progress and next tasks").
