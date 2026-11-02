@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { count, DONE, firstOpen, hasOpen, markBlocked, OPEN } from "../src/tasks.ts";
+import { continuesPrevious, count, DONE, firstOpen, hasOpen, markBlocked, OPEN } from "../src/tasks.ts";
 
 const file = () => {
   const f = join(mkdtempSync(join(tmpdir(), "ralph-t-")), "a.md");
@@ -27,4 +27,10 @@ test("markBlocked changes only the named line, with no regex surprises", () => {
 
 test("missing file has no open items", () => {
   assert.equal(hasOpen("/nonexistent/file.md"), false);
+});
+
+test("continuesPrevious sees the planner's tag anywhere in the item", () => {
+  assert.ok(continuesPrevious("- [ ] (continues previous) mine layout 2 of 4"));
+  assert.ok(continuesPrevious("- [ ] mine layout 3 (Continues Previous)"));
+  assert.ok(!continuesPrevious("- [ ] mine layout 4 of 4"));
 });

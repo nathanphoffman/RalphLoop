@@ -9,6 +9,8 @@ const DEFAULT_LIMITS: Limits = {
   itemTimeout: 2700,
   gateTimeout: 1800,
   maxItemFails: 3,
+  groupItemsTarget: 1,
+  maxItemsPerContext: 1,
   maxItemsPerRound: 24,
   qualityEvery: 3,
   maxRounds: 30,

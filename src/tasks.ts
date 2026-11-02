@@ -6,6 +6,10 @@ export const OPEN = "- [ ]";
 export const DONE = "- [x]";
 export const BLOCKED = "- [!]";
 
+/** The planner tags an item that builds on the one before it, so the worker may resume that Claude session. */
+export const CONTINUES_PREVIOUS = /\(continues previous\)/i;
+export const continuesPrevious = (item: string): boolean => CONTINUES_PREVIOUS.test(item);
+
 export function tasksFile(p: Project, checkout: string, area: string): string {
   return join(checkout, p.loopDir, "tasks", `${area}.md`);
 }

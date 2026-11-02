@@ -17,7 +17,7 @@ export function log(p: Project, tag: string, message: string): void {
   reportLogLine(p, tag, message);
 }
 
-export type ItemStatus = "done" | "fail" | "blocked";
+export type ItemStatus = "done" | "partial" | "fail" | "blocked";
 
 /** One row per worker session: epoch, round, area, status, seconds. status.ts and report.ts read it. */
 export function recordItem(p: Project, round: number, area: string, status: ItemStatus, seconds: number): void {

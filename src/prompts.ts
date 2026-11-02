@@ -31,6 +31,8 @@ export function renderPrompt(p: Project, name: string, vars: PromptVars = {}): s
     ["BRANCHES", branches.join(", ")],
     ["BRANCHES_CSV", branches.join(",")],
     ["AREAS_CSV", p.areas.join(",")],
+    ["GROUP_TARGET", String(p.limits.groupItemsTarget)],
+    ["GROUP_MAX", String(p.limits.maxItemsPerContext)],
     ["GATE_OUTPUT", vars.gateOutput ?? ""],
   ];
   for (const [key, value] of values) text = text.replaceAll(`{{${key}}}`, () => value);

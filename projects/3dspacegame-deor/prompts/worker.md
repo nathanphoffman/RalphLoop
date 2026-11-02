@@ -27,6 +27,18 @@ Do exactly ONE item: the first line in {{LOOP_DIR}}/tasks/{{AREA}}.md that start
      the Deor-backed API). Before you start, count the `#[test]` functions in the files you convert; after, the count must
      be the same or higher. Two tests may be merged only if every assertion survives; say so in the item note. A dropped
      test is a failed item.
+   - Data-carrying enums (`Docked(StationId)` | `InSpace { .. }`) are NOT a reason to block. Model them as a struct with one
+     validator-type field per case (`StationRef docked_at`, `InSpace in_space`: a `type` over a number or a struct, so an
+     empty field is "not valid" and code must check `is valid` before `avow`). Add a validator over the whole struct that
+     requires exactly one case to be valid, and build values only through small `make_docked` / `make_in_space` functions.
+     Update every Rust user of the enum in the same session. A plain enum plus a struct of the data is fine for simple cases.
+   - Maps, `Result`, `Option` and `u64` are NOT reasons to block. `lib/map.deor` has a map (`h_make`, `h_set`, `h_get`, `h_has`,
+     `h_keys`; string keys and values, so convert numbers with `lib/convert.deor`, and sort the keys with `lib/list_order.deor`
+     where the old `BTreeMap` order mattered, such as saves). `lib/result.deor` and `lib/optional.deor` cover `Result` and `Option`.
+     Use `int` (i64) for `u64`; the full 64-bit cases (hashes, random seeds) already have helpers in `src/shared/deor_lib/`.
+   - Engine calls (macroquad, sockets, files, audio) go through the thinnest wrappers possible: one or two lines, general
+     (`draw_rect`, `draw_text`, `send_bytes`), shared by many Deor call sites. Do the layout, colours, timing and message
+     encoding in Deor. Before writing a new wrapper look for an existing primitive that already does the job.
    - Behaviour: pin the old behaviour with Rust tests first (add them where missing), then keep them passing. Tiny float
      differences are fine: check with a tolerance (about 1e-4 relative), and log any visible change in DECISIONS.md.
      Do not change behaviour otherwise.
@@ -41,6 +53,14 @@ Do exactly ONE item: the first line in {{LOOP_DIR}}/tasks/{{AREA}}.md that start
    allow, add an entry to {{LOOP_DIR}}/DEOR_BUGS.md (what you wrote, what Deor produced, minimal repro, workaround, files),
    use the simplest clean workaround, and continue. No workable workaround: mark the item "- [!]" with the reason.
 6a. Do not build ideas from todo.md or add features. This loop only converts; behaviour stays the same.
+   Deor was updated again (2026-11-01 evening): the plain forms now work, so new code need not use the old workarounds
+   (old workarounds may stay, do not spend a session removing them). Fixed: pushing to a list after `(a, vertices) in
+   struct` (`vertices at end = x`), and reassigning a function parameter (it changes only your copy). New errors instead of
+   hangs or bad Rust: Rust keywords as names (`box`, `match`, `impl`, `loop`, `ref`, `mod`, `trait`, about 35), the same
+   variant name in two untyped enums (rename one; typed enums are fine), `with (value as field)` (use only field names inside
+   `with (...)`), and `x = y with (f)` (write `Type x2 = y with (f)`). Still a rule: never store a `GameHandle` in a struct,
+   pass it as its own parameter. Do not log these as bugs.
+   Deor has a while loop: write `for if condition` (see deor_specification/docs/loops.md). There is no `while` keyword.
 6b. A Deor helper that builds a struct which is later drawn (text with a size, a box, a colour) gets a Rust test of what it
    builds (size above zero, the colour you expect). Drawing cannot be tested, but the numbers fed to it can.
 6. Write legible Deor: short functions, descriptive names (3+ characters), a named variable for each intermediate result,

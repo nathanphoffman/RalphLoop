@@ -20,7 +20,7 @@ const config: ProjectConfig = {
   skeletonStep: false,
   commitTrailer: "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
   // Never pauses between rounds (checkpointEvery 0; control.env has CONTINUE_TO_NEXT_ROUND=true). Runs until the planner creates COMPLETE (Deor share >= 90 and codequality >= 90 and the checks green).
-  limits: { maxRounds: 200, qualityEvery: 4, checkpointEvery: 0, checkpointWaitMinutes: 0 },
+  limits: { groupItemsTarget: 2, maxItemsPerContext: 4, maxRounds: 200, qualityEvery: 4, checkpointEvery: 0, checkpointWaitMinutes: 0 },
 
   areas: {
     modes: {

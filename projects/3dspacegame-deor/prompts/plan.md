@@ -26,6 +26,26 @@ Do not chase the number with artificial changes.
    one area must not depend on unmerged work from another area in the same round (items that need a new helper wait a
    round, or the area adds the helper itself as an integration-point addition). Carry over unfinished or blocked work in a
    fixable form. Put one "run the share script and codequality, record the numbers in PROGRESS.md" item last.
+   Blocked items: read the reason on every "- [!]" line. When the reason is "Rust struct/type X is used by Rust" (Plan, Room, Tunnel,
+   Lamp, MineLayout, contract types, Player, Enemy, Game state), write ONE item that turns X into a Deor struct AND updates every Rust
+   file that uses X in the same session (fields become f64, Vec3 fields become `raw` with helpers), then convert the logic that works on
+   X. Put these first in the area's list, sized to a whole folder, and name every file that uses X. Do not leave a blocked item blocked
+   because its types are Rust: converting the type is the item.
+   Split `Game` (src/shared/game/mod.rs) into small groups. Write items for the shared area, first in its list, that move the
+   small fields of `Game` into a few Deor structs: for example `HudState` (toast, warning, kill_pops, hull_sparks, speed_trail,
+   viewed_target, ping_millis) and `CheatState` (typed_letters, cheats_enabled), with one Deor update function per group. `Game`
+   keeps owning the groups; each frame Rust passes a group in and stores the returned group. Update every Rust user of the moved
+   fields in the same session. Do NOT move the big entity lists (lasers, missiles, enemies, enemy_shots, pickups, particles),
+   `player`, `remote_players` or `mode_state` into Deor values: they stay in Rust behind `GameHandle`, updated by one Deor call
+   per list per frame.
+   Shrink the engine Rust. Goal: the Rust that touches macroquad, sockets, files and audio is as small and isolated as possible,
+   one thin set of general primitives (draw_rect, draw_text, draw_line, draw_mesh, play_sound, send_bytes, receive_bytes,
+   read_text, write_text and the like, each one or two lines) that Deor calls from everywhere. Audit every `rust` block in a
+   .deor file and every hand-written Rust file that calls macroquad, std::net or std::fs: where a wrapper exists for one feature
+   (draw_kill_pop, draw_status_box, send_laser_message) and a general primitive could serve it, write a cleanup item to move
+   the layout, colour, timing and encoding into Deor, call the shared primitive, and delete the one-off wrapper. Keep the
+   primitives in one place per kind (for example `src/shared/engine/`), tested where they can be. Put these items after the
+   struct-first and Game-splitting items, and count the Rust lines before and after.
    If the Deor share has not risen for two rounds, write down why in PROGRESS.md and change tactics (a bigger helper
    library, converting a state struct first, splitting the blocked file); do not stop.
 3. Only when the share is 90.0 or more, codequality's total is 85.0 or more (the range is 85 to 90; a score above 90 is fine but never a goal), every milestone in SPEC.md is done, the "Done
@@ -34,4 +54,20 @@ Do not chase the number with artificial changes.
    If {{LOOP_DIR}}/SPEC.md still says the quality goal is 90, change its Goal and "Done means" lines to the 85 to 90 range.
    Full checks:
    {{FULL_CHECK}}
+   Related items in one area: when an item builds directly on the one above it in the same list (same folder or same types, so the
+   files it needs are already loaded), start its line with `(continues previous)`, for example
+   `- [ ] (continues previous) mine layout 2 of 4 ...`. The worker then resumes the previous item's Claude conversation
+   instead of starting cold. Aim to chain related items in groups of about {{GROUP_TARGET}}, and never more than {{GROUP_MAX}} in
+   a row. This is a preference, never a rule: do not reorder items or force unrelated ones together to reach it, and a
+   group of 1 is fine. Tag only items that really share context; leave the first item
+   of every list and unrelated items untagged.
+   Parked items: each round, read every `- [!]` item's note. If the note says the item is glue, would add Rust ("no
+   net-negative conversion"), or waits on another item, do NOT write it back as `- [ ]` this round. Move it under a
+   `## Parked` heading at the end of that area's task file, keep its text, and add one line: `Unparks when: <a fact you can
+   check>` (for example "the item that makes `Game` a Deor struct has merged", or "shared exports an `Enemy` entry point for
+   mine"). Every round, check each parked item's condition against the code and PROGRESS.md; if it is now true, move the item
+   back into the open list (and tag it `(continues previous)` only if it follows related work). If the item is blocked
+   because Deor itself cannot do it, say so in the line, and list it in PROGRESS.md under "Needs Deor help" so the user sees it.
+   A parked item costs no sessions. Also count the parked Rust lines in PROGRESS.md, so the user can see the ceiling on the
+   Deor share.
 4. Commit everything under {{LOOP_DIR}}/ ("ralph: round {{ROUND}} progress and next tasks").

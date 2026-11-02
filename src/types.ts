@@ -14,6 +14,8 @@ export interface Limits {
   itemTimeout: number; // one Claude session
   gateTimeout: number; // one check command
   maxItemFails: number; // tries on one item before it is marked blocked
+  groupItemsTarget: number; // the planner aims to chain related items in groups of about this many (1 = no preference); never forced
+  maxItemsPerContext: number; // items one Claude context may serve; an item tagged (continues previous) resumes it (1 = always fresh)
   maxItemsPerRound: number; // safety stop for one worker per round
   qualityEvery: number; // finished items between quality passes (0 = never)
   maxRounds: number;
