@@ -74,6 +74,9 @@ Do exactly ONE item: the first line in {{LOOP_DIR}}/tasks/{{AREA}}.md that start
    (The full checks and `codequality --full` run in the quality pass and at merge time.)
 8. Update {{LOOP_DIR}}/tasks/{{AREA}}.md: change the item to "- [x]" and add a short note: Deor lines added, Rust lines
    removed, net hand-written Rust. If you split the item, mark the original "- [x]" only when all its parts are done.
+   Notes stay short (one or two lines, never more than 300 characters in total on an item). If you changed nothing, write
+   NO note, leave the item as it is and stop: a note with no code counts as a failed session, and repeating the same
+   finding on the item only makes every later session read more.
 9. `git add -A` and commit on the current branch with a clear message. Do not push. Do not touch other worktrees. Do not
    run git merge/rebase/reset.
 One item only, then stop.
