@@ -70,4 +70,8 @@ Do not chase the number with artificial changes.
    because Deor itself cannot do it, say so in the line, and list it in PROGRESS.md under "Needs Deor help" so the user sees it.
    A parked item costs no sessions. Also count the parked Rust lines in PROGRESS.md, so the user can see the ceiling on the
    Deor share.
+   Player bugs: read {{LOOP_DIR}}/BUGS.md every round. Every bug whose Status is Open or Reopened must have a `BUG FIRST` item
+   at the top of its area's list (keep it above all conversion items, never parked, never blocked, retag it
+   `(continues previous)` never). When BUGS.md says Fixed, drop the item and carry on with conversion work. If a Fixed bug
+   has no measured numbers in BUGS.md, treat it as still open.
 4. Commit everything under {{LOOP_DIR}}/ ("ralph: round {{ROUND}} progress and next tasks").
