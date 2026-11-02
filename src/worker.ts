@@ -8,7 +8,7 @@ import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
 import { reportCommitsSince } from "./notify.ts";
 import { commitIfDirty, git, resetClean } from "./shell.ts";
-import { continuesPrevious, firstOpen, hasOpen, markBlocked, tasksFile } from "./tasks.ts";
+import { BLOCKED, continuesPrevious, count, DONE, firstOpen, hasOpen, markBlocked, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
 
 const continuePrompt = (tasksPath: string): string =>
@@ -74,6 +74,7 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     const item = firstOpen(tasks)!;
     const startHead = git(dir, "rev-parse", "HEAD");
     const started = Date.now();
+    const finishedBefore = count(tasks, DONE) + count(tasks, BLOCKED);
     log(p, tag, `item ${items}: ${item.slice(0, 90)}`);
 
     const { session, resumed } = sessionFor(item);
@@ -85,7 +86,8 @@ export async function runWorker(p: Project, area: string, round: number): Promis
     reportCommitsSince(p, dir, tag, startHead);
     const seconds = Math.round((Date.now() - started) / 1000);
 
-    const ticked = firstOpen(tasks) !== item;
+    // A note typed onto the open line does not count: the item must be ticked or blocked, or code must be committed.
+    const ticked = count(tasks, DONE) + count(tasks, BLOCKED) > finishedBefore;
     if (ticked || changedCode(startHead)) {
       fails = 0;
       recordItem(p, round, area, ticked ? "done" : "partial", seconds);
