@@ -85,4 +85,6 @@ Do not chase the number with artificial changes.
    frame over 50 ms with the name of the screen it was on. Use the existing profiler module if it fits. One shared helper,
    no copies. Keep the lines out of tests. Then write in BUGS.md how to read them. When the user reports numbers or the bug
    again, a human sets the Status back to Open or Reopened; until then do not spend sessions on that bug.
+   Copy cost: when you write an item that loops over thousands of cells, pixels, vertices or entities, say in the item
+   that the loop must read big lists in place (or use `move` or a macro), because Deor copies lists on every call.
 4. Commit everything under {{LOOP_DIR}}/ ("ralph: round {{ROUND}} progress and next tasks").

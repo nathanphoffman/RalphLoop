@@ -64,6 +64,17 @@ Do exactly ONE item: the first line in {{LOOP_DIR}}/tasks/{{AREA}}.md that start
    BUG items ({{LOOP_DIR}}/BUGS.md): measure first. If the numbers rule the code out and the rest needs a real window (GL
    upload, shaders, screen switches), do not keep re-measuring: write the numbers and what you ruled out under the bug, set
    its Status to `Needs human check`, tick the item and stop.
+   COPY COST (read this before writing any loop): Deor copies every list and every struct that holds a list each time it is
+   passed to a function, assigned, or looped over. A copy per pixel, per cell, per enemy or per neighbour turned a 3 ms job
+   into 2 to 4 seconds (the cockpit frames, 57,600 cells copied millions of times). So: (a) never pass a big list or a
+   struct holding one to a helper from inside a loop: read it in place in the one function that loops (`list at index`),
+   or hand the helper only the numbers it needs; (b) when a function really is the last user of a big list or struct, pass
+   it with `move` (`helper(move big_list)`, `for move (item in list)`); (c) logic you need in several places inside a hot
+   loop (an index formula, a neighbour test) goes in an `unsafe_macro` that is inlined, not a function; (d) a `rust` block
+   that clones a big value per call (`.clone()` of a cave, a mesh, a mask) is the same bug; (e) build big things once and
+   keep them (the mine texture atlas is painted once per biome). Small things (a 3-number list, one point) are cheap to
+   copy: do not contort code for them. When an item loops over thousands of cells or items, time it with `time_section`
+   or a test with `std::time::Instant` and write the number in your note.
 6b. A Deor helper that builds a struct which is later drawn (text with a size, a box, a colour) gets a Rust test of what it
    builds (size above zero, the colour you expect). Drawing cannot be tested, but the numbers fed to it can.
 6. Write legible Deor: short functions, descriptive names (3+ characters), a named variable for each intermediate result,
