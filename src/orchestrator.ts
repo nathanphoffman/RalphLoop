@@ -4,6 +4,7 @@ import { worktreeOf } from "./areas.ts";
 import { runClaude } from "./claude.ts";
 import { runGate } from "./checks.ts";
 import { ensureState, log } from "./log.ts";
+import { liveSpecFile, seedLiveSpec, syncLiveSpec } from "./livespec.ts";
 import { ensureControlFile, waitAtCheckpoint } from "./checkpoint.ts";
 import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
@@ -107,6 +108,7 @@ export async function runOrchestrator(p: Project): Promise<number> {
     return 1;
   }
   writeFileSync(join(p.stateDir, "orchestrator.pid"), String(process.pid));
+  seedLiveSpec(p);
 
   const round0Marker = join(p.stateDir, "round0-done");
   if (p.skeletonStep && !existsSync(round0Marker)) {
@@ -142,6 +144,8 @@ export async function runOrchestrator(p: Project): Promise<number> {
     await claude(p.integrationDir, "merge", round);
     let green = await ensureGreen(round, p.integrationDir);
     if (green) await recordQuality(p, p.integrationDir, round, "merged");
+    // The spec you edit in runs/<project>/SPEC.md reaches the planner here, so edits need no commit.
+    if (syncLiveSpec(p, p.integrationDir)) log(p, TAG, `SPEC.md updated from ${liveSpecFile(p)}`);
     await claude(p.integrationDir, "plan", round);
     commitIfDirty(p, p.integrationDir, `ralph: round ${round} progress and next tasks`, "planner");
 

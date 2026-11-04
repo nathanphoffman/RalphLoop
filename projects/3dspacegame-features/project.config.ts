@@ -52,10 +52,10 @@ const config: ProjectConfig = {
     "python3 scripts/check_reuse.py",
   ].join("\n"),
   qualityCmd: "codequality --full",
-  env: { CARGO_BUILD_JOBS: "2", RUST_TEST_THREADS: "2" },
+  env: { CARGO_BUILD_JOBS: "1", RUST_TEST_THREADS: "2" },
 
   // ralph-rust-cq = ralph-rust plus the `codequality` tool (built by `ralph docker build rust`).
-  docker: { image: "ralph-rust-cq", cpus: 3, memory: "7.5g", mounts: [wt] },
+  docker: { image: "ralph-rust-cq", cpus: 3, memory: "6g", mounts: [wt] },
 };
 
 export default config;
