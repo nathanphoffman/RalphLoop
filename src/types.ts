@@ -33,6 +33,8 @@ export interface ProjectConfig {
   baseBranch?: string; // default main
   /** Branch the round merges on (default ralph/integration). Give each project in one repo its own. */
   integrationBranch?: string;
+  /** Put each round on the base branch as ONE squashed commit instead of every item commit (default false). */
+  squashRounds?: boolean;
   loopDir?: string; // folder in the repo with SPEC.md, CONTRACTS.md, tasks/ (default ralph)
   rulesFile?: string; // the repo's own coding rules, read by workers if present (default CLAUDE.md)
   /** Areas run in parallel in their own worktrees. Object order is the merge order. */
@@ -87,6 +89,7 @@ export interface Project {
   worktreesDir: string;
   integrationDir: string;
   integrationBranch: string;
+  squashRounds: boolean;
   docker: Required<Pick<NonNullable<ProjectConfig["docker"]>, "image" | "cpus" | "memory">> & {
     network?: string;
     mounts: string[];

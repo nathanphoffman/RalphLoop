@@ -60,7 +60,13 @@ export async function runOrchestrator(p: Project): Promise<number> {
   };
 
   // Fast-forward the base branch to integration (a plain merge if you committed to it meanwhile).
-  const advanceBase = (): void => {
+  // With squashRounds the whole round lands as one commit, so the base log gets one line per round.
+  const advanceBase = (round: number): void => {
+    if (p.squashRounds) {
+      git(p.repo, "merge", "-q", "--squash", p.integrationBranch);
+      if (git(p.repo, "status", "--porcelain")) commitIfDirty(p, p.repo, `ralph: round ${round} (${p.name})`);
+      return;
+    }
     if (!gitOk(p.repo, "merge", "-q", "--ff-only", p.integrationBranch)) git(p.repo, "merge", "-q", "--no-edit", p.integrationBranch);
   };
 
@@ -68,7 +74,9 @@ export async function runOrchestrator(p: Project): Promise<number> {
   const syncWorktrees = (): void => {
     for (const area of p.areas) {
       const dir = worktreeOf(p, area);
-      if (gitOk(dir, "merge-base", "--is-ancestor", "HEAD", p.baseBranch)) git(dir, "reset", "-q", "--hard", p.baseBranch);
+      // After a squash the item commits are not in the base branch, but they are in the integration branch.
+      const landedIn = p.squashRounds ? p.integrationBranch : p.baseBranch;
+      if (gitOk(dir, "merge-base", "--is-ancestor", "HEAD", landedIn)) git(dir, "reset", "-q", "--hard", p.baseBranch);
       else if (!gitOk(dir, "rebase", "-q", p.baseBranch)) {
         gitOk(dir, "rebase", "--abort");
         log(p, TAG, `WARNING: ${area} could not be rebased onto ${p.baseBranch}, left as is`);
@@ -148,7 +156,7 @@ export async function runOrchestrator(p: Project): Promise<number> {
       return 4;
     }
     try {
-      advanceBase();
+      advanceBase(round);
     } catch {
       log(p, TAG, `could not move ${p.baseBranch} to ${p.integrationBranch}`);
       return 5;
