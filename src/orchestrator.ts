@@ -145,8 +145,15 @@ export async function runOrchestrator(p: Project): Promise<number> {
     let green = await ensureGreen(round, p.integrationDir);
     if (green) await recordQuality(p, p.integrationDir, round, "merged");
     // The spec you edit in runs/<project>/SPEC.md reaches the planner here, so edits need no commit.
-    if (syncLiveSpec(p, p.integrationDir)) log(p, TAG, `SPEC.md updated from ${liveSpecFile(p)}`);
+    const specChanged = syncLiveSpec(p, p.integrationDir);
+    if (specChanged) log(p, TAG, `SPEC.md updated from ${liveSpecFile(p)}`);
     await claude(p.integrationDir, "plan", round);
+    // A planner that ends the loop right after the spec grew has most likely read a stale checklist: plan once more.
+    if (specChanged && existsSync(complete)) {
+      log(p, TAG, "COMPLETE was claimed in a round where SPEC.md changed: removing it and planning again");
+      rmSync(complete);
+      await claude(p.integrationDir, "plan", round);
+    }
     commitIfDirty(p, p.integrationDir, `ralph: round ${round} progress and next tasks`, "planner");
 
     // COMPLETE only counts if the result passes the checks.
