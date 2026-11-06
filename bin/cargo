@@ -1,0 +1,7 @@
+#!/bin/sh
+# Lets only one cargo command run at a time inside the container (all workers share the lock).
+# Cargo subcommands that call cargo again (clippy, fmt) skip the lock via RALPH_CARGO_LOCKED.
+REAL=/home/ralph/.cargo/bin/cargo
+if [ -n "$RALPH_CARGO_LOCKED" ]; then exec "$REAL" "$@"; fi
+export RALPH_CARGO_LOCKED=1
+exec flock /tmp/ralph-cargo.lock "$REAL" "$@"
