@@ -27,6 +27,7 @@ const config: ProjectConfig = {
   // claudeModel: "",     // pass --model to every session
   // limits: { qualityEvery: 3, maxItemsPerRound: 24, maxItemFails: 3, itemTimeout: 2700, maxRounds: 30, niceLevel: 10 },
   // env: { CARGO_BUILD_JOBS: "3" }, // extra environment for Claude and the checks
+  // buildLock: true,     // one cargo at a time across all areas (bin/cargo takes a file lock); give that one cargo the threads
 
   docker: { image: "ralph-base" /* , cpus: 6, memory: "9g", mounts: ["/path/one"] */ },
 };

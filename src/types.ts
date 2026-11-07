@@ -51,6 +51,9 @@ export interface ProjectConfig {
   skeletonStep?: boolean;
   /** Extra environment for Claude and the checks, e.g. { CARGO_BUILD_JOBS: "3" }. */
   env?: Record<string, string>;
+  /** One build pipeline: every `cargo` the checks or a Claude session runs goes through bin/cargo, a shim that takes a
+   *  file lock (runs/<name>/state/build.lock), so parallel areas never build at the same time (default false). */
+  buildLock?: boolean;
   claudeModel?: string;
   commitTrailer?: string;
   limits?: Partial<Limits>;
@@ -79,6 +82,7 @@ export interface Project {
   qualityCmd: string;
   skeletonStep: boolean;
   env: Record<string, string>;
+  buildLock: boolean;
   claudeCmd: string[]; // command and leading args, e.g. ["claude"]
   claudeModel: string;
   commitTrailer: string;

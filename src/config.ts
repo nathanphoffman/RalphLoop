@@ -37,6 +37,12 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
   const runsDir = process.env.RALPH_RUNS_DIR ?? join(HOME, "runs", name);
   const areas = Object.keys(config.areas);
   if (areas.length === 0) throw new Error(`${name}: config.areas is empty`);
+  const stateDir = join(runsDir, "state");
+  // With buildLock every cargo call (the checks' and Claude's) finds bin/cargo first on PATH; the shim serializes them.
+  const buildLock = config.buildLock ?? false;
+  const env = buildLock
+    ? { PATH: `${join(HOME, "bin")}:${process.env.PATH ?? ""}`, RALPH_BUILD_LOCK: join(stateDir, "build.lock"), ...config.env }
+    : { ...config.env };
   return {
     name,
     home: HOME,
@@ -52,14 +58,15 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
     fullCheck: config.fullCheck ?? "",
     qualityCmd: config.qualityCmd ?? "",
     skeletonStep: config.skeletonStep ?? true,
-    env: config.env ?? {},
+    env,
+    buildLock,
     claudeCmd: (process.env.RALPH_CLAUDE ?? "claude").split(" ").filter(Boolean),
     claudeModel: config.claudeModel ?? "",
     commitTrailer: config.commitTrailer ?? "Co-Authored-By: Claude <noreply@anthropic.com>",
     limits: limitsFor(config),
     skipGate: Boolean(process.env.RALPH_SKIP_GATE),
     runsDir,
-    stateDir: join(runsDir, "state"),
+    stateDir,
     worktreesDir: join(runsDir, "worktrees"),
     integrationDir: join(runsDir, "integration"),
     integrationBranch: config.integrationBranch ?? "ralph/integration",

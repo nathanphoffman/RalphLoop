@@ -1,7 +1,10 @@
 #!/bin/sh
-# Lets only one cargo command run at a time inside the container (all workers share the lock).
-# Cargo subcommands that call cargo again (clippy, fmt) skip the lock via RALPH_CARGO_LOCKED.
-REAL=/home/ralph/.cargo/bin/cargo
+# One build pipeline for all areas: only one cargo command runs at a time. Put this folder first on PATH (the engine does
+# it when the project config says buildLock: true) and set RALPH_BUILD_LOCK to the lock file (default /tmp/ralph-cargo.lock).
+# Cargo subcommands that call cargo again (clippy, fmt) skip the lock via RALPH_CARGO_LOCKED, so they never deadlock.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REST="$(printf '%s' "$PATH" | tr ':' '\n' | grep -vx "$HERE" | paste -sd: -)"
+REAL="$(PATH="$REST" command -v cargo)" || { echo "bin/cargo: no real cargo on PATH" >&2; exit 127; }
 if [ -n "$RALPH_CARGO_LOCKED" ]; then exec "$REAL" "$@"; fi
 export RALPH_CARGO_LOCKED=1
-exec flock /tmp/ralph-cargo.lock "$REAL" "$@"
+exec flock "${RALPH_BUILD_LOCK:-/tmp/ralph-cargo.lock}" "$REAL" "$@"
