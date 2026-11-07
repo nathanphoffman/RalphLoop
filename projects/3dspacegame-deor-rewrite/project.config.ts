@@ -56,7 +56,7 @@ const config: ProjectConfig = {
   },
   // Shared files every area may touch (append-only, see CONTRACTS.md).
   integrationFiles:
-    /^(src\/game\.deor|src\/game_generated\.rs|src\/engine\/prelude_wrappers\.deor|src\/shared\/types\/|scripts\/build_deor\.sh|scripts\/shared_deor_items\.txt|src\/lib\.rs|CLAUDE\.md|README\.md|DEOR_CONVERSION\.md|Cargo\.(toml|lock)|rewrite_ralph\/(DECISIONS|CONTRACTS|DEOR_BUGS|ENUMS|PROGRESS|BUGS)\.md)/,
+    /^(src\/game\.deor|src\/game_generated\.rs|src\/engine\/prelude_wrappers\.deor|src\/shared\/types\/|scripts\/build_deor\.sh|scripts\/shared_deor_items\.txt|src\/lib\.rs|CLAUDE\.md|README\.md|DEOR_CONVERSION\.md|Cargo\.(toml|lock)|rewrite_ralph\/(DECISIONS|CONTRACTS|DEOR_BUGS|ENUMS|PORT_NOTES|DO_NOT_PORT|PROGRESS|BUGS)\.md)/,
 
   // Cheap check per item; the full gate runs in the quality pass, at merge time and at the end of the round.
   // Workers also run the tests of the modules they touched (prompts/worker.md).
@@ -69,13 +69,16 @@ const config: ProjectConfig = {
     "cargo test 2>&1",
     "cargo clippy --all-targets -- -D warnings 2>&1",
     "python3 scripts/check_reuse.py",
-    "python3 scripts/check_spelling.py",
+    // check_spelling.py lives on main only; Phase 6 ports it (PLAN 11, ah) and adds it here.
     "python3 scripts/deor_share.py",
   ].join("\n"),
   // The Deor share by folder and the code-quality score; the planner and the quality pass read both.
   qualityCmd: "python3 scripts/deor_share.py --by-folder; codequality --full",
   // One build pipeline (buildLock) with all 6 threads. DEOR_BIN points at the host's deor binary (mounted at the same path).
   buildLock: true,
+  // Every other round, drop the game's incremental build cache in each checkout (8+ GB per worktree otherwise); the
+  // compiled dependencies stay, so the next build costs one full compile of the crate (a few minutes).
+  cleanup: { everyRounds: 2, cmd: "cargo clean -p space_shooter" },
   env: { CARGO_BUILD_JOBS: "6", RUST_TEST_THREADS: "4", DEOR_BIN: join(hostHome, ".deor/bin/deor") },
 
   // ralph-rust-cq = ralph-rust plus the `codequality` tool (built by `ralph docker build rust`). ~/.deor holds `deor`.

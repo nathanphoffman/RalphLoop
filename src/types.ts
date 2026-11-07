@@ -54,6 +54,11 @@ export interface ProjectConfig {
   /** One build pipeline: every `cargo` the checks or a Claude session runs goes through bin/cargo, a shim that takes a
    *  file lock (runs/<name>/state/build.lock), so parallel areas never build at the same time (default false). */
   buildLock?: boolean;
+  /** Housekeeping between rounds: `cmd` runs (with the project env, through bin/cargo when buildLock is on) in every
+   *  area worktree and the integration checkout after every `everyRounds`-th round, e.g.
+   *  { everyRounds: 2, cmd: "cargo clean -p my_crate" } drops the crate's incremental cache (gigabytes per worktree)
+   *  and keeps the compiled dependencies. Default: never. */
+  cleanup?: { everyRounds: number; cmd: string };
   claudeModel?: string;
   commitTrailer?: string;
   limits?: Partial<Limits>;
@@ -83,6 +88,7 @@ export interface Project {
   skeletonStep: boolean;
   env: Record<string, string>;
   buildLock: boolean;
+  cleanup: { everyRounds: number; cmd: string }; // everyRounds 0 = never
   claudeCmd: string[]; // command and leading args, e.g. ["claude"]
   claudeModel: string;
   commitTrailer: string;

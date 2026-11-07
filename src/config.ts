@@ -60,6 +60,7 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
     skeletonStep: config.skeletonStep ?? true,
     env,
     buildLock,
+    cleanup: config.cleanup ?? { everyRounds: 0, cmd: "" },
     claudeCmd: (process.env.RALPH_CLAUDE ?? "claude").split(" ").filter(Boolean),
     claudeModel: config.claudeModel ?? "",
     commitTrailer: config.commitTrailer ?? "Co-Authored-By: Claude <noreply@anthropic.com>",

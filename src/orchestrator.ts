@@ -8,8 +8,13 @@ import { liveSpecFile, seedLiveSpec, syncLiveSpec } from "./livespec.ts";
 import { ensureControlFile, waitAtCheckpoint } from "./checkpoint.ts";
 import { renderPrompt } from "./prompts.ts";
 import { recordQuality } from "./quality.ts";
+
+/** True after every `cleanup.everyRounds`-th round (counted from round 1); never when it is 0. */
+export function cleanupDue(p: Pick<Project, "cleanup">, round: number): boolean {
+  return p.cleanup.everyRounds > 0 && round % p.cleanup.everyRounds === 0;
+}
 import { reportCommitsSince } from "./notify.ts";
-import { commitIfDirty, git, gitOk, killChildren } from "./shell.ts";
+import { commitIfDirty, git, gitOk, killChildren, runLimited } from "./shell.ts";
 import { count, OPEN, tasksFile } from "./tasks.ts";
 import type { Project } from "./types.ts";
 import { runWorker } from "./worker.ts";
@@ -82,6 +87,16 @@ export async function runOrchestrator(p: Project): Promise<number> {
         gitOk(dir, "rebase", "--abort");
         log(p, TAG, `WARNING: ${area} could not be rebased onto ${p.baseBranch}, left as is`);
       }
+    }
+  };
+
+  // Housekeeping (config.cleanup): the worktrees are synced and idle here, so the build caches can be dropped safely.
+  const runCleanup = async (p: Project, round: number): Promise<void> => {
+    const dirs = [...p.areas.map((area) => worktreeOf(p, area)), p.integrationDir].filter((dir) => existsSync(dir));
+    log(p, TAG, `cleanup after round ${round}: ${p.cleanup.cmd} in ${dirs.length} checkouts`);
+    for (const dir of dirs) {
+      const result = await runLimited(p, ["bash", "-c", p.cleanup.cmd], { cwd: dir, timeoutSec: p.limits.gateTimeout });
+      if (result.status !== 0) log(p, TAG, `WARNING: cleanup failed in ${dir} (exit ${result.status}): ${result.output.trim().split("\n").slice(-3).join(" | ")}`);
     }
   };
 
@@ -173,6 +188,7 @@ export async function runOrchestrator(p: Project): Promise<number> {
       return 5;
     }
     syncWorktrees();
+    if (cleanupDue(p, round)) await runCleanup(p, round);
 
     if (!existsSync(complete)) {
       const open = p.areas.reduce((n, a) => n + count(tasksFile(p, p.repo, a), OPEN), 0);
