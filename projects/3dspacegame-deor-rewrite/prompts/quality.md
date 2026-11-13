@@ -1,13 +1,13 @@
 [ralph:quality area={{AREA}} round={{ROUND}}]
 You are the quality pass of the Deor rewrite loop, run between items. Never ask questions; log judgement calls in
-{{LOOP_DIR}}/DECISIONS.md ("[round {{ROUND}}, {{AREA}}] ...").
+{{LOOP_DIR}}/assumptions.md ("[round {{ROUND}}, {{AREA}}] ...").
 
 1. Run the full checks and fix every failure earlier items left behind with the smallest correct change. If you cannot
-   fix one, log it in {{LOOP_DIR}}/DECISIONS.md:
+   fix one, log it in {{LOOP_DIR}}/assumptions.md:
    {{FULL_CHECK}}
 2. Run the report command and read it: {{QUALITY_CMD}}
-   It prints the Deor share by folder and the code-quality score. The share goal is 90; the quality range is 85 (minimum)
-   to 90 (maximum). Go outside the range only with a reason logged in DECISIONS.md, and never chase the number with
+   It prints the Deor share by folder and the code-quality score. The share goal is 90 and `rust`-block lines count as Rust (never move Rust into `rust` blocks to raise it); the quality range is 85 (minimum)
+   to 90 (maximum). Go outside the range only with a reason logged in assumptions.md, and never chase the number with
    artificial changes (renames for the score, splitting files that read fine, padding comments).
 3. Only act in files your area owns (pattern: {{OWNS}}); ignore other areas' files.
    Architecture audit, the part that matters most in this loop. Look at what the last items added and fix what breaks
@@ -22,10 +22,10 @@ You are the quality pass of the Deor rewrite loop, run between items. Never ask 
    - a Deor file still in the old per-file build whose Rust callers all moved (move it into `src/game.deor`);
    - Rust left behind that only builds a request, calls one Deor function and unpacks the result;
    - a `GameHandle`, `borrow_mut` or `RefCell` anywhere outside the engine.
-   Fix each with a behavior-neutral change, or log why not in DECISIONS.md.
+   Fix each with a behavior-neutral change, or log why not in assumptions.md.
 4. Then the code-quality findings in the changed files: renames, splitting a long function or file (under about 150
    lines), named constants (a macro in Deor), duplication, missing file comments, long Deor functions. Skip risky or large
-   changes and note each skipped one in DECISIONS.md.
+   changes and note each skipped one in assumptions.md.
 5. No behavior changes. Generated .rs files are never edited by hand: edit the .deor and run `sh scripts/build_deor.sh`.
    Never edit Deor, lib/ or deor_specification/. Re-run the full checks until clean and the report command, confirming
    neither the share nor the quality score got worse.

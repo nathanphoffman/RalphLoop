@@ -13,6 +13,8 @@ export interface AreaConfig {
 export interface Limits {
   itemTimeout: number; // one Claude session
   gateTimeout: number; // one check command
+  minItemSeconds: number; // a session that ends sooner without ticking its item is retried (0 = never)
+  maxEarlyRetries: number; // such retries per item
   maxItemFails: number; // tries on one item before it is marked blocked
   groupItemsTarget: number; // the planner aims to chain related items in groups of about this many (1 = no preference); never forced
   maxItemsPerContext: number; // items one Claude context may serve; an item tagged (continues previous) resumes it (1 = always fresh)
@@ -54,6 +56,8 @@ export interface ProjectConfig {
   /** One build pipeline: every `cargo` the checks or a Claude session runs goes through bin/cargo, a shim that takes a
    *  file lock (runs/<name>/state/build.lock), so parallel areas never build at the same time (default false). */
   buildLock?: boolean;
+  /** With buildLock: how many cargo commands may run at once (default 1). Give each one CARGO_BUILD_JOBS = threads / this. */
+  buildPipelines?: number;
   /** Housekeeping between rounds: `cmd` runs (with the project env, through bin/cargo when buildLock is on) in every
    *  area worktree and the integration checkout after every `everyRounds`-th round, e.g.
    *  { everyRounds: 2, cmd: "cargo clean -p my_crate" } drops the crate's incremental cache (gigabytes per worktree)
@@ -88,6 +92,7 @@ export interface Project {
   skeletonStep: boolean;
   env: Record<string, string>;
   buildLock: boolean;
+  buildPipelines: number;
   cleanup: { everyRounds: number; cmd: string }; // everyRounds 0 = never
   claudeCmd: string[]; // command and leading args, e.g. ["claude"]
   claudeModel: string;

@@ -26,6 +26,8 @@ export async function runWorker(p: Project, area: string, round: number): Promis
   const { maxItemFails, maxItemsPerRound, maxItemsPerContext, qualityEvery } = p.limits;
   let fails = 0;
   let items = 0;
+  let earlyRetries = 0; // sessions on the current item that ended too soon
+  let retryItem = "";
   let sinceQuality = 0;
   // The Claude conversation the last item ran in. A later item tagged (continues previous) resumes it instead of re-reading everything.
   let context: { id: string; itemsServed: number } | undefined;
@@ -93,6 +95,17 @@ export async function runWorker(p: Project, area: string, round: number): Promis
       recordItem(p, round, area, ticked ? "done" : "partial", seconds);
       if (!ticked) log(p, tag, "item not finished, but it committed code: counts as progress");
       checkOwnership(startHead);
+      if (retryItem !== item) {
+        retryItem = item;
+        earlyRetries = 0;
+      }
+      // A slice committed in a few minutes is the "one small slice and stop" failure: go back to the same item.
+      if (!ticked && seconds < p.limits.minItemSeconds && earlyRetries < p.limits.maxEarlyRetries) {
+        earlyRetries++;
+        items--;
+        log(p, tag, `session ended after ${seconds}s without ticking the item: continuing it (${earlyRetries} of ${p.limits.maxEarlyRetries})`);
+        continue;
+      }
       sinceQuality++;
       if (qualityEvery > 0 && sinceQuality >= qualityEvery) {
         await qualityPass();

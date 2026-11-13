@@ -1,12 +1,17 @@
 [ralph:worker area={{AREA}} round={{ROUND}}]
 You are one worker (area {{AREA}}) of an autonomous loop that rewrites the Rust game "{{PROJECT}}" around Deor. Never ask questions.
 If something is unclear, make the simplest choice that follows {{LOOP_DIR}}/PLAN.md and add one line to
-{{LOOP_DIR}}/DECISIONS.md ("[round {{ROUND}}, {{AREA}}] ...").
+{{LOOP_DIR}}/assumptions.md ("[round {{ROUND}}, {{AREA}}] ...").
 
-GOAL: Deor owns the game's state and logic; Rust is only an engine layer of one-line primitives. At the end at most 10% of
-the non-test code is Rust (`python3 scripts/deor_share.py`, goal 90). Adding Deor beside Rust that stays does not count.
+GOAL (read this twice): CONVERT HAND-WRITTEN RUST INTO DEOR until the Deor share is at least 90%. The number is
+`python3 scripts/deor_share.py`: deor / (deor + hand-written Rust + `rust`-block lines). Rust inside a `rust` block in a
+`.deor` file COUNTS AS RUST: moving code from a `.rs` file into a `rust` block gains nothing and is not a conversion.
+Tests are not counted. Rust stays only as a thin engine layer (window, drawing, audio, files, sockets, input, time, random,
+vector maths) made of one-line primitives. Do your best on the item you are given: finish it, delete the Rust it names,
+and keep the game's behaviour the same. Adding Deor beside Rust that stays does not count.
 
-Read first, every session: {{RULES_FILE}} (code rules), {{LOOP_DIR}}/SPEC.md (the phase your item is in),
+Read first, every session: {{RULES_FILE}} (code rules), {{LOOP_DIR}}/finish_line_plan.md (the order of work and how an item must be written), {{LOOP_DIR}}/NEW_PLAN.md (the "Takeover plan" section and the
+rules for every phase), {{LOOP_DIR}}/assumptions.md (every decision so far; add yours there), {{LOOP_DIR}}/SPEC.md (background),
 {{LOOP_DIR}}/CONTRACTS.md (the world split, the engine surface, the file layout), {{LOOP_DIR}}/PLAN.md sections 3 and 4
 (the architecture and the nine rules) and the section of the phase you are in, {{LOOP_DIR}}/DEOR_BUGS.md,
 {{LOOP_DIR}}/tasks/{{AREA}}.md, and the Deor docs when you need them (deor_specification/learn_deor.md, docs/interop.md,
@@ -61,16 +66,16 @@ HOW TO DO AN ITEM
    constructors), change no behavior there, and write "cross-area edit" in the commit message. Anything else another area
    needs goes as one line under "Requests" in {{LOOP_DIR}}/CONTRACTS.md.
 1. Measure first: `python3 scripts/deor_share.py` (note hand-written Rust plus `rust`-block lines) and the `#[test]` count
-   of the files you will touch.
-2. Port from the right source. Rules and data already in Deor on this branch move over nearly unchanged (PLAN.md section
-   6 says which must NOT move because `main` removed or replaced them). Everything in Open Play, and every feature in
-   PLAN.md section 11, is ported from `main`'s Rust: `git show main:<path>` and `git diff 0a8ecd87 main -- <path>`.
+   of the files you will touch. Afterwards `python3 scripts/slice_report.py` shows Rust and Deor lines added and removed; if
+   Deor grew over 3x the Rust removed, say why in {{LOOP_DIR}}/assumptions.md.
+2. Port from the right source: this branch's own Rust and Deor. The Open Play host, messages, save text and net codecs are
+   already Deor here; follow how they were done. `main` is only for Phase F (parity); do not copy from it now.
 3. Convert whole modules with their callers, then DELETE the Rust they replace in the same commit (functions, structs,
    constants, `use` lines, empty files). Rust that builds a request, calls one Deor function and unpacks the answer is
    Rust growing: move that caller into Deor too.
 4. Never drop a test. Port every test to the new code; the `#[test]` count after must be equal or higher (merging two
    tests is allowed only if every assertion survives, said in the note). Pin old behavior with a test before changing
-   it; loosen exact float asserts to a tolerance (about 1e-4 relative) and log it in DECISIONS.md.
+   it; loosen exact float asserts to a tolerance (about 1e-4 relative) and log it in assumptions.md.
 5. Write legible Deor: short functions, names of 3+ characters, a named variable per intermediate result, numbers in a
    macro, a comment at the top of each file, files under about 150 lines. A function that is only a Rust call is a
    wrapper, not a conversion.
@@ -84,8 +89,15 @@ HOW TO DO AN ITEM
    {{ITEM_CHECK}}
    (The full checks and `codequality --full` run in the quality pass and at merge time.)
 9. Update {{LOOP_DIR}}/tasks/{{AREA}}.md: "- [x]" and a short note (Deor lines added, Rust lines removed, net hand-written
-   Rust, tests before and after; under 300 characters). Too big for one session: do a coherent part, commit, leave the
-   rest as a new "- [ ]" line below, and never leave a file half-converted with more Rust than before. Nothing changed:
-   write NO note and stop (a note without code is a failed session).
+   Rust, tests before and after; under 300 characters). A session has two hours: use it. Finish the item; stop early only
+   when it is done and the quick check is clean. Splitting an item is allowed only after at least 40 minutes of real work,
+   and the part committed must have deleted Rust (and says exactly which files are left). "The type is Rust" and "another
+   folder still uses it" are never reasons to stop: convert that folder too (mechanical edits in other folders are allowed
+   for a type's owner). A temporary bridge is fine while a chain runs, as long as this session's commit deletes more
+   hand-written Rust than it adds. Nothing changed: write NO note and stop (a note without code is a failed session).
 10. `git add -A` and commit on the current branch with a clear message. Do not push. Do not run git merge/rebase/reset.
-One item only, then stop.
+    A commit is a CHECKPOINT, not the end of the session. After each commit go straight back to step 3 with the next
+    file the item names (no summary, no "I did part of it"). The session ends only when the item's line is "- [x]" or
+    the two hours are up. Committing one 50-line slice and stopping after 5 to 20 minutes is the failure mode this rule
+    exists for.
+One item only, worked until it is ticked or the two hours are up, then stop.

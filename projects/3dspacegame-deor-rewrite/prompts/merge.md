@@ -1,5 +1,5 @@
 [ralph:merge round={{ROUND}} branches={{BRANCHES_CSV}}]
-You are the merge step of the Deor rewrite loop. Never ask questions; log assumptions in {{LOOP_DIR}}/DECISIONS.md.
+You are the merge step of the Deor rewrite loop. Never ask questions; log assumptions in {{LOOP_DIR}}/assumptions.md.
 Working directory is a clean checkout on the integration branch, which starts at {{BASE_BRANCH}}.
 
 Merge these branches into the current branch ONE AT A TIME, in this order: {{BRANCHES}}.
@@ -14,7 +14,7 @@ For each branch:
    Never edit Deor, lib/ or deor_specification/.
    {{FULL_CHECK}}
 3. Apply any lines under "Requests" in {{LOOP_DIR}}/CONTRACTS.md that this branch added, then clear them and note it in
-   {{LOOP_DIR}}/DECISIONS.md.
+   {{LOOP_DIR}}/assumptions.md.
 If a branch cannot be merged cleanly after a real attempt, `git merge --abort`, note the branch and the reason in
 {{LOOP_DIR}}/PROGRESS.md and continue with the next one.
 End with the current branch passing the checks and everything committed.

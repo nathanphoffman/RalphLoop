@@ -8,6 +8,8 @@ export const HOME = dirname(dirname(fileURLToPath(import.meta.url)));
 const DEFAULT_LIMITS: Limits = {
   itemTimeout: 2700,
   gateTimeout: 1800,
+  minItemSeconds: 0,
+  maxEarlyRetries: 0,
   maxItemFails: 3,
   groupItemsTarget: 1,
   maxItemsPerContext: 1,
@@ -40,8 +42,9 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
   const stateDir = join(runsDir, "state");
   // With buildLock every cargo call (the checks' and Claude's) finds bin/cargo first on PATH; the shim serializes them.
   const buildLock = config.buildLock ?? false;
+  const buildPipelines = config.buildPipelines ?? 1;
   const env = buildLock
-    ? { PATH: `${join(HOME, "bin")}:${process.env.PATH ?? ""}`, RALPH_BUILD_LOCK: join(stateDir, "build.lock"), ...config.env }
+    ? { RALPH_BUILD_PIPELINES: String(buildPipelines), PATH: `${join(HOME, "bin")}:${process.env.PATH ?? ""}`, RALPH_BUILD_LOCK: join(stateDir, "build.lock"), ...config.env }
     : { ...config.env };
   return {
     name,
@@ -60,6 +63,7 @@ export function resolveProject(name: string, config: ProjectConfig, projectDir: 
     skeletonStep: config.skeletonStep ?? true,
     env,
     buildLock,
+    buildPipelines,
     cleanup: config.cleanup ?? { everyRounds: 0, cmd: "" },
     claudeCmd: (process.env.RALPH_CLAUDE ?? "claude").split(" ").filter(Boolean),
     claudeModel: config.claudeModel ?? "",
